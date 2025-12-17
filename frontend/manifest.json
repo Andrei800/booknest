@@ -1,0 +1,11 @@
+{
+    "name": "BookNest",
+    "short_name": "BookNest",
+    "description": "Читательский дневник с AI-функциями",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#f8fafc",
+    "theme_color": "#6366f1",
+    "orientation": "portrait-primary",
+    "categories": ["books", "productivity", "lifestyle"]
+}

@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="BookNest - Читательский дневник с AI-функциями">
+    <meta name="theme-color" content="#6366f1">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+    
+    <title>📚 BookNest - Мой читательский дневник</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="/static/styles.css?v=8">
+</head>
+<body>
+    <div id="app">
+        <!-- Навигация -->
+        <nav class="navbar">
+            <div class="navbar-brand">
+                <span class="logo">📚</span>
+                <span class="brand-name">BookNest</span>
+            </div>
+            <div class="navbar-menu">
+                <a href="#" class="nav-link active" data-page="books">Книги</a>
+                <a href="#" class="nav-link" data-page="stats">Статистика</a>
+                <a href="#" class="nav-link" data-page="import">Импорт</a>
+            </div>
+            <div class="navbar-actions">
+                <button class="theme-toggle" id="themeToggle" title="Переключить тему">
+                    <div class="theme-toggle-track">
+                        <span class="sun-icon">☀️</span>
+                        <span class="moon-icon">🌙</span>
+                    </div>
+                    <div class="theme-toggle-thumb"></div>
+                </button>
+                <button class="btn btn-secondary btn-icon" id="scanIsbnBtn" title="Сканировать ISBN">
+                    📷
+                </button>
+                <button class="btn btn-primary" id="addBookBtn">
+                    <span>+</span> Добавить
+                </button>
+            </div>
+        </nav>
+
+        <!-- Основной контент -->
+        <main class="main-content">
+            <!-- Страница книг -->
+            <section id="books-page" class="page active">
+                <!-- Фильтры -->
+                <div class="filters-bar">
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="🔍 Поиск по названию или автору...">
+                    </div>
+                    <div class="filters">
+                        <select id="statusFilter">
+                            <option value="">Все статусы</option>
+                            <option value="planned">📋 Хочу прочитать</option>
+                            <option value="reading">📖 Читаю</option>
+                            <option value="finished">✅ Прочитано</option>
+                            <option value="on_hold">⏸️ Отложено</option>
+                            <option value="dropped">❌ Брошено</option>
+                            <option value="wishlist">🎁 Хотелки</option>
+                        </select>
+                        <select id="formatFilter">
+                            <option value="">Все форматы</option>
+                            <option value="paper">📕 Бумажная</option>
+                            <option value="ebook">📱 Электронная</option>
+                            <option value="audiobook">🎧 Аудиокнига</option>
+                        </select>
+                        <select id="genreFilter">
+                            <option value="">Все жанры</option>
+                        </select>
+                        <select id="sortBy">
+                            <option value="created_at">По дате добавления</option>
+                            <option value="title">По названию</option>
+                            <option value="rating">По рейтингу</option>
+                            <option value="finished_at">По дате прочтения</option>
+                        </select>
+                    </div>
+                    <div class="view-toggle">
+                        <button class="view-btn active" data-view="medium" title="Средние">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <rect x="3" y="3" width="8" height="8" rx="1"/>
+                                <rect x="13" y="3" width="8" height="8" rx="1"/>
+                                <rect x="3" y="13" width="8" height="8" rx="1"/>
+                                <rect x="13" y="13" width="8" height="8" rx="1"/>
+                            </svg>
+                        </button>
+                        <button class="view-btn" data-view="small" title="Мелкие">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <rect x="2" y="2" width="5" height="5" rx="1"/>
+                                <rect x="9" y="2" width="5" height="5" rx="1"/>
+                                <rect x="16" y="2" width="5" height="5" rx="1"/>
+                                <rect x="2" y="9" width="5" height="5" rx="1"/>
+                                <rect x="9" y="9" width="5" height="5" rx="1"/>
+                                <rect x="16" y="9" width="5" height="5" rx="1"/>
+                                <rect x="2" y="16" width="5" height="5" rx="1"/>
+                                <rect x="9" y="16" width="5" height="5" rx="1"/>
+                                <rect x="16" y="16" width="5" height="5" rx="1"/>
+                            </svg>
+                        </button>
+                        <button class="view-btn" data-view="list" title="Список">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <rect x="3" y="4" width="18" height="4" rx="1"/>
+                                <rect x="3" y="10" width="18" height="4" rx="1"/>
+                                <rect x="3" y="16" width="18" height="4" rx="1"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Статусы-счётчики -->
+                <div class="status-cards">
+                    <div class="status-card" data-status="">
+                        <span class="status-icon">📚</span>
+                        <span class="status-count" id="totalCount">0</span>
+                        <span class="status-label">Всего</span>
+                    </div>
+                    <div class="status-card" data-status="reading">
+                        <span class="status-icon">📖</span>
+                        <span class="status-count" id="readingCount">0</span>
+                        <span class="status-label">Читаю</span>
+                    </div>
+                    <div class="status-card" data-status="finished">
+                        <span class="status-icon">✅</span>
+                        <span class="status-count" id="finishedCount">0</span>
+                        <span class="status-label">Прочитано</span>
+                    </div>
+                    <div class="status-card" data-status="wishlist">
+                        <span class="status-icon">🎁</span>
+                        <span class="status-count" id="wishlistCount">0</span>
+                        <span class="status-label">Хотелки</span>
+                    </div>
+                </div>
+
+                <!-- Список книг -->
+                <div class="books-grid" id="booksGrid">
+                    <!-- Книги загрузятся через JS -->
+                </div>
+
+                <!-- Пагинация -->
+                <div class="pagination" id="pagination"></div>
+            </section>
+
+            <!-- Страница статистики -->
+            <section id="stats-page" class="page">
+                <div class="stats-container">
+                    <h2>📊 Статистика чтения</h2>
+                    
+                    <div class="stats-overview">
+                        <div class="stat-card">
+                            <div class="stat-value" id="statTotalBooks">0</div>
+                            <div class="stat-label">Всего книг</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="statFinishedBooks">0</div>
+                            <div class="stat-label">Прочитано</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="statPagesRead">0</div>
+                            <div class="stat-label">Страниц</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="statAvgRating">-</div>
+                            <div class="stat-label">Средняя оценка</div>
+                        </div>
+                    </div>
+
+                    <div class="stats-sections">
+                        <div class="stats-section">
+                            <h3>🏆 Топ авторы</h3>
+                            <div id="topAuthors" class="top-list"></div>
+                        </div>
+                        <div class="stats-section">
+                            <h3>📚 Топ жанры</h3>
+                            <div id="topGenres" class="top-list"></div>
+                        </div>
+                    </div>
+
+                    <div class="reading-challenge">
+                        <h3>🎯 Цель на год</h3>
+                        <div class="challenge-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="challengeProgress"></div>
+                            </div>
+                            <span id="challengeText">0 / 12 книг</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Страница импорта -->
+            <section id="import-page" class="page">
+                <div class="import-container">
+                    <h2>📥 Импорт и экспорт</h2>
+                    
+                    <div class="import-section">
+                        <h3>📱 Импорт из Book Tracker</h3>
+                        <p>Загрузите CSV файл из приложения Book Tracker</p>
+                        <div class="import-dropzone" id="dropzoneBookTracker">
+                            <input type="file" id="fileInputBookTracker" accept=".csv" hidden>
+                            <span class="dropzone-icon">📱</span>
+                            <span class="dropzone-text">Перетащите CSV из Book Tracker</span>
+                            <span class="dropzone-hint">Поддерживает формат экспорта Book Tracker</span>
+                        </div>
+                    </div>
+
+                    <div class="import-section">
+                        <h3>📁 Импорт из файла (универсальный)</h3>
+                        <p>Загрузите CSV или JSON файл в стандартном формате</p>
+                        <div class="import-dropzone" id="dropzone">
+                            <input type="file" id="fileInput" accept=".csv,.json" hidden>
+                            <span class="dropzone-icon">📁</span>
+                            <span class="dropzone-text">Перетащите файл или нажмите для выбора</span>
+                            <span class="dropzone-hint">Поддерживаются форматы: CSV, JSON</span>
+                        </div>
+                        <a href="/api/import-export/template/csv" class="btn btn-secondary">
+                            📄 Скачать шаблон CSV
+                        </a>
+                    </div>
+
+                    <div class="export-section">
+                        <h3>Экспорт данных</h3>
+                        <p>Скачайте все ваши книги для бэкапа</p>
+                        <div class="export-buttons">
+                            <a href="/api/import-export/export/csv" class="btn btn-secondary">
+                                📊 Экспорт в CSV
+                            </a>
+                            <a href="/api/import-export/export/json" class="btn btn-secondary">
+                                📋 Экспорт в JSON
+                            </a>
+                            <a href="/api/import-export/export/pdf" class="btn btn-primary">
+                                📕 Экспорт в PDF
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Результат импорта -->
+                    <div class="import-result" id="importResult" style="display: none;">
+                        <h3>Результат импорта</h3>
+                        <div class="result-stats">
+                            <span class="result-success">✅ Импортировано: <strong id="importSuccess">0</strong></span>
+                            <span class="result-skipped">⏭️ Пропущено: <strong id="importSkipped">0</strong></span>
+                            <span class="result-failed">❌ Ошибок: <strong id="importFailed">0</strong></span>
+                        </div>
+                        <div class="result-errors" id="importErrors"></div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Модальное окно добавления книги -->
+        <div class="modal" id="bookModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modalTitle">Добавить книгу</h2>
+                    <button class="modal-close" id="closeModal">&times;</button>
+                </div>
+                <form id="bookForm">
+                    <input type="hidden" id="bookId">
+                    
+                    <div class="form-row">
+                        <div class="form-group flex-2">
+                            <label for="title">Название *</label>
+                            <input type="text" id="title" required placeholder="Введите название книги">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="authors">Авторы</label>
+                            <input type="text" id="authors" placeholder="Через запятую">
+                        </div>
+                        <div class="form-group">
+                            <label for="genres">Жанры</label>
+                            <input type="text" id="genres" placeholder="Через запятую">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="isbn">ISBN</label>
+                            <input type="text" id="isbn" placeholder="978-...">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="status">Статус</label>
+                            <select id="status">
+                                <option value="planned">📋 Хочу прочитать</option>
+                                <option value="reading">📖 Читаю</option>
+                                <option value="finished">✅ Прочитано</option>
+                                <option value="on_hold">⏸️ Отложено</option>
+                                <option value="dropped">❌ Брошено</option>
+                                <option value="wishlist">🎁 Хотелки</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="format">Формат</label>
+                            <select id="format">
+                                <option value="paper">📕 Бумажная</option>
+                                <option value="ebook">📱 Электронная</option>
+                                <option value="audiobook">🎧 Аудиокнига</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="language">Язык</label>
+                            <select id="language">
+                                <option value="ru">🇷🇺 Русский</option>
+                                <option value="en">🇬🇧 English</option>
+                                <option value="uk">🇺🇦 Українська</option>
+                                <option value="other">Другой</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="totalPages">Всего страниц</label>
+                            <input type="number" id="totalPages" min="0" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="currentPage">Текущая страница</label>
+                            <input type="number" id="currentPage" min="0" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="rating">Оценка (1-10)</label>
+                            <input type="number" id="rating" min="1" max="10" placeholder="-">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group flex-2">
+                            <label for="location">Расположение</label>
+                            <input type="text" id="location" placeholder="Например: полка 3, коробка на балконе">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group flex-2">
+                            <label for="notes">Заметки</label>
+                            <textarea id="notes" rows="3" placeholder="Ваши заметки о книге..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="autoFetchCover" checked>
+                                🔍 Автоматически искать обложку
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="cancelBtn">Отмена</button>
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Модальное окно просмотра книги -->
+        <div class="modal" id="viewModal">
+            <div class="modal-content modal-large">
+                <button class="modal-close" id="closeViewModal">&times;</button>
+                <div id="bookDetails"></div>
+            </div>
+        </div>
+
+        <!-- Модальное окно выбора обложки -->
+        <div class="modal" id="coverModal">
+            <div class="modal-content modal-large">
+                <div class="modal-header">
+                    <h2>🖼️ Выбор обложки</h2>
+                    <button class="modal-close" id="closeCoverModal">&times;</button>
+                </div>
+                <div class="cover-modal-body">
+                    <div class="cover-search-form">
+                        <input type="text" id="coverSearchTitle" placeholder="Название книги">
+                        <input type="text" id="coverSearchAuthor" placeholder="Автор (опционально)">
+                        <button class="btn btn-primary" id="searchCoversBtn">🔍 Найти</button>
+                    </div>
+                    
+                    <div class="cover-loading" id="coverLoading" style="display: none;">
+                        <div class="spinner"></div>
+                        <span>Поиск обложек...</span>
+                    </div>
+                    
+                    <div class="covers-grid" id="coversGrid"></div>
+                    
+                    <div class="cover-url-form">
+                        <input type="text" id="customCoverUrl" placeholder="Или вставьте URL обложки напрямую...">
+                    </div>
+                    
+                    <div class="cover-modal-footer">
+                        <button class="btn btn-secondary" onclick="closeCoverModal()">Отмена</button>
+                        <button class="btn btn-primary" id="applyCoverBtn">✅ Применить обложку</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Модальное окно сканера ISBN -->
+        <div class="modal" id="scanModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>📷 Сканирование ISBN</h2>
+                    <button class="modal-close" id="closeScanModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="scan-container">
+                        <video id="scanVideo" playsinline></video>
+                        <div class="scan-overlay">
+                            <div class="scan-frame"></div>
+                        </div>
+                    </div>
+                    <div class="scan-status" id="scanStatus">
+                        Наведите камеру на штрих-код книги
+                    </div>
+                    <div class="scan-manual">
+                        <p>Или введите ISBN вручную:</p>
+                        <div class="scan-input-row">
+                            <input type="text" id="manualIsbn" placeholder="978-3-16-148410-0">
+                            <button class="btn btn-primary" id="searchIsbnBtn">Найти</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Модальное окно AI рекомендаций -->
+        <div class="modal" id="aiModal">
+            <div class="modal-content modal-large">
+                <div class="modal-header">
+                    <h2>🤖 AI Рекомендации</h2>
+                    <button class="modal-close" id="closeAiModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="ai-loading" id="aiLoading">
+                        <div class="spinner"></div>
+                        <span>AI анализирует книгу...</span>
+                    </div>
+                    <div class="ai-result" id="aiResult" style="display: none;">
+                        <div class="ai-summary" id="aiSummary"></div>
+                        <div class="ai-recommendations" id="aiRecommendations"></div>
+                    </div>
+                    <div class="ai-error" id="aiError" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    
+    <!-- Toast контейнер -->
+    <div id="toastContainer" class="toast-container"></div>
+    
+    <!-- Библиотека для сканирования штрих-кодов -->
+    <script src="https://unpkg.com/@ericblade/quagga2@1.8.4/dist/quagga.min.js"></script>
+    
+    <!-- JavaScript -->
+    <script src="/static/app.js?v=7"></script>
+</body>
+</html>
