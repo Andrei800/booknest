@@ -4,9 +4,10 @@ AI Book Recommendations using Google Gemini
 import httpx
 import json
 import re
+import os
 from typing import Optional
 
-GEMINI_API_KEY = "AIzaSyAhl_SD8TPUWNLb2-6PHnNoDsa4I-yOCtI"
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
 
 
